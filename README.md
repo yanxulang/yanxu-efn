@@ -1,46 +1,74 @@
 # 言序 EF 类库
 
-这是给易语言.飞扬（EF）的本地类库示例，通过动态加载 yanxu 的 C ABI 动态库来运行言序源码。
+这是给易语言.飞扬（EF）的本地类库，通过动态加载 yanxu 的 C ABI 动态库来运行言序源码。
+
+本项目只发布 EF 桥接库 `言序.efn`，不捆绑 `yanxu.dll`、`libyanxu.so` 或 `libyanxu.dylib`。yanxu 运行时由用户按自己需要的 yanxu 版本自行构建和替换。
 
 ## 下载
 
-推荐从 GitHub Actions 或 Releases 下载预构建包：
+推荐从 GitHub Actions 或 Releases 下载预构建的桥接库：
 
-- 最新构建产物：打开 [Actions / Build EF library](https://github.com/yanxulang/yanxu-efn/actions/workflows/build.yml)，选择最近一次成功运行，在页面底部下载 `yanxu-efn-windows-x86_64` 或 `yanxu-efn-linux-x86_64` artifact。
-- 稳定版本：打开 [Releases](https://github.com/yanxulang/yanxu-efn/releases)，下载对应平台的压缩包。
+- 最新构建产物：打开 [Actions / Build EF library](https://github.com/yanxulang/yanxu-efn/actions/workflows/build.yml)，选择最近一次成功运行，在页面底部下载 `yanxu-efn-windows-x86_64-bridge-only` 或 `yanxu-efn-linux-x86_64-bridge-only` artifact。
+- 稳定版本：打开 [Releases](https://github.com/yanxulang/yanxu-efn/releases)，下载对应平台的 bridge-only 压缩包。
 
-Windows 用户通常下载 `yanxu-efn-windows-x86_64.zip`，解压后会得到：
+Windows 用户通常下载 `yanxu-efn-windows-x86_64-bridge-only.zip`，解压后会得到：
 
-- `言序.efn`：EF 本地类库文件
-- `yanxu.dll`：yanxu C ABI 运行时
+- `言序.efn`：EF 本地桥接类库文件
+- `build-yanxu-runtime.ps1`：构建 yanxu 运行时的辅助脚本
 - `README.md`：使用说明
 
-建议把 `言序.efn` 与 `yanxu.dll` 放在同一目录，或把 `yanxu.dll` 所在目录加入系统 `PATH`。在 EF 程序里载入运行时时，传入 `yanxu.dll` 的完整路径或同目录相对路径。
+## 构建 yanxu 运行时
 
-## GitHub Actions 产物
+EF 桥接库运行时需要能载入 yanxu C ABI 动态库。你可以构建最新版 yanxu，也可以指定某个 tag、分支或 commit，以便和自己的项目锁定版本。
 
-本仓库的 workflow 会自动构建：
+Windows PowerShell：
 
-- Windows x86_64: `yanxu-efn-windows-x86_64.zip`，包含 `言序.efn` 与 `yanxu.dll`
-- Linux x86_64: `yanxu-efn-linux-x86_64.tar.gz`，包含 `言序.efn` 与 `libyanxu.so`
+```powershell
+.\build-yanxu-runtime.ps1 -OutDir .\runtime
+```
 
-推送 tag（例如 `v0.1.0`）时，workflow 会把两个平台压缩包发布到 GitHub Releases。普通分支 push 会上传为 Actions artifact。
+指定 yanxu 版本：
 
-## 本地编译
+```powershell
+.\build-yanxu-runtime.ps1 -Ref v1.1.6 -OutDir .\runtime
+```
 
-先在 yanxu 核心仓库中生成 C ABI 动态库：
+Linux/macOS：
+
+```sh
+sh ./build-yanxu-runtime.sh
+```
+
+指定 yanxu 版本：
+
+```sh
+YANXU_REF=v1.1.6 OUT_DIR=./runtime sh ./build-yanxu-runtime.sh
+```
+
+脚本会从 `https://github.com/YanXuLang/yanxu.git` 拉取源码并执行 `cargo build --release`。运行时动态库通常输出为：
+
+- Windows: `runtime/yanxu.dll`
+- Linux: `runtime/libyanxu.so`
+- macOS: `runtime/libyanxu.dylib`
+
+也可以在 yanxu 核心仓库中手动执行：
 
 ```sh
 cargo build --release
 ```
 
-运行时动态库通常位于：
+## GitHub Actions 产物
 
-- Windows: `target/release/yanxu.dll`
-- Linux: `target/release/libyanxu.so`
-- macOS: `target/release/libyanxu.dylib`
+本仓库的 workflow 只构建 bridge-only 包：
 
-再在本仓库根目录编译 EF 类库：
+- Windows x86_64: `yanxu-efn-windows-x86_64-bridge-only.zip`，包含 `言序.efn` 和运行时构建脚本，不包含 `yanxu.dll`
+- Linux x86_64: `yanxu-efn-linux-x86_64-bridge-only.tar.gz`，包含 `言序.efn` 和运行时构建脚本，不包含 `libyanxu.so`
+
+推送 tag（例如 `v0.2.0`）时，workflow 会把两个平台 bridge-only 包发布到 GitHub Releases。普通分支 push 会上传为 Actions artifact。
+
+## 本地编译桥接库
+
+在本仓库根目录编译 EF 类库：
 
 ```sh
 make
@@ -87,13 +115,26 @@ make TARGET=windows CXX=x86_64-w64-mingw32-g++ OUTPUT_FILE=言序.efn
 
 Windows 示例流程：
 
-1. 下载并解压 `yanxu-efn-windows-x86_64.zip`。
-2. 在 EF 工程中引用 `言序.efn`。
-3. 调用 `言序.引擎.载入运行时("yanxu.dll")`，或传入 `yanxu.dll` 的完整路径。
-4. 创建 `言序.引擎` 对象，调用 `新建沙箱引擎("")`。
-5. 调用 `运行("言 1 加 2；")`，读取返回的 JSON。
+1. 下载并解压 `yanxu-efn-windows-x86_64-bridge-only.zip`。
+2. 运行 `build-yanxu-runtime.ps1`，生成你要使用的 `yanxu.dll`。
+3. 在 EF 工程中引用 `言序.efn`。
+4. 调用 `言序.引擎.载入运行时("runtime\\yanxu.dll")`，或传入 `yanxu.dll` 的完整路径。
+5. 创建 `言序.引擎` 对象，调用 `新建沙箱引擎("")`。
+6. 调用 `运行("言 1 加 2；")`，读取返回的 JSON。
 
 同一个对象的多次 `运行` 会复用持久 yanxu 引擎，因此变量和函数定义可跨调用保留。不受限引擎会授予 yanxu 宿主权限，只应执行可信源码。
+
+## 版本与 ABI
+
+`言序.efn` 动态查找 yanxu C ABI 的以下符号：
+
+- `yanxu_engine_new`
+- `yanxu_engine_new_unrestricted`
+- `yanxu_engine_run`
+- `yanxu_engine_free`
+- `yanxu_string_free`
+
+只要 yanxu runtime 保持这些 C ABI 符号和 schema 1 JSON 返回格式兼容，就可以替换为新版 runtime。若 yanxu 未来升级 ABI，请重新构建或更新本桥接库。
 
 ## 第三方代码与版权
 

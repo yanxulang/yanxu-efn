@@ -15,20 +15,10 @@ jobs:
       - name: Checkout yanxu-efn
         uses: actions/checkout@v4
 
-      - name: Checkout yanxu runtime
-        uses: actions/checkout@v4
-        with:
-          repository: YanXuLang/yanxu
-          path: yanxu
-
       - name: Install build tools
         run: |
           sudo apt-get update
           sudo apt-get install -y g++ make
-
-      - name: Build yanxu C ABI runtime
-        working-directory: yanxu
-        run: cargo build --release
 
       - name: Build EF native library
         run: make
@@ -37,19 +27,19 @@ jobs:
         run: |
           mkdir -p dist
           cp "言序.efn" dist/
-          cp yanxu/target/release/libyanxu.so dist/
           cp README.md dist/
-          tar -C dist -czf yanxu-efn-linux-x86_64.tar.gz .
+          cp scripts/build-yanxu-runtime.sh dist/
+          tar -C dist -czf yanxu-efn-linux-x86_64-bridge-only.tar.gz .
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: yanxu-efn-linux-x86_64
+          name: yanxu-efn-linux-x86_64-bridge-only
           path: |
-            yanxu-efn-linux-x86_64.tar.gz
+            yanxu-efn-linux-x86_64-bridge-only.tar.gz
             dist/言序.efn
-            dist/libyanxu.so
             dist/README.md
+            dist/build-yanxu-runtime.sh
 
   build-windows:
     runs-on: ubuntu-latest
@@ -57,21 +47,10 @@ jobs:
       - name: Checkout yanxu-efn
         uses: actions/checkout@v4
 
-      - name: Checkout yanxu runtime
-        uses: actions/checkout@v4
-        with:
-          repository: YanXuLang/yanxu
-          path: yanxu
-
       - name: Install build tools
         run: |
           sudo apt-get update
           sudo apt-get install -y g++-mingw-w64-x86-64 make zip
-          rustup target add x86_64-pc-windows-gnu
-
-      - name: Build yanxu C ABI runtime
-        working-directory: yanxu
-        run: cargo build --release --target x86_64-pc-windows-gnu
 
       - name: Build EF native library
         run: make TARGET=windows CXX=x86_64-w64-mingw32-g++ OUTPUT_FILE=言序.efn
@@ -80,19 +59,19 @@ jobs:
         run: |
           mkdir -p dist
           cp "言序.efn" dist/
-          cp yanxu/target/x86_64-pc-windows-gnu/release/yanxu.dll dist/
           cp README.md dist/
-          (cd dist && zip -9 -r ../yanxu-efn-windows-x86_64.zip .)
+          cp scripts/build-yanxu-runtime.ps1 dist/
+          (cd dist && zip -9 -r ../yanxu-efn-windows-x86_64-bridge-only.zip .)
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: yanxu-efn-windows-x86_64
+          name: yanxu-efn-windows-x86_64-bridge-only
           path: |
-            yanxu-efn-windows-x86_64.zip
+            yanxu-efn-windows-x86_64-bridge-only.zip
             dist/言序.efn
-            dist/yanxu.dll
             dist/README.md
+            dist/build-yanxu-runtime.ps1
 
   publish-release:
     if: startsWith(github.ref, 'refs/tags/')
@@ -110,5 +89,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release-assets/yanxu-efn-linux-x86_64/yanxu-efn-linux-x86_64.tar.gz
-            release-assets/yanxu-efn-windows-x86_64/yanxu-efn-windows-x86_64.zip
+            release-assets/yanxu-efn-linux-x86_64-bridge-only/yanxu-efn-linux-x86_64-bridge-only.tar.gz
+            release-assets/yanxu-efn-windows-x86_64-bridge-only/yanxu-efn-windows-x86_64-bridge-only.zip
