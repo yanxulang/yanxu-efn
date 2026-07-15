@@ -1,0 +1,55 @@
+name: Build EF library
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout yanxu-efn
+        uses: actions/checkout@v4
+
+      - name: Checkout yanxu runtime
+        uses: actions/checkout@v4
+        with:
+          repository: YanXuLang/yanxu
+          path: yanxu
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ make
+
+      - name: Build yanxu C ABI runtime
+        working-directory: yanxu
+        run: cargo build --release
+
+      - name: Build EF native library
+        run: make
+
+      - name: Package artifact
+        run: |
+          mkdir -p dist
+          cp "言序.efn" dist/
+          cp yanxu/target/release/libyanxu.so dist/
+          cp README.md dist/
+          tar -C dist -czf yanxu-efn-linux-x86_64.tar.gz .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: yanxu-efn-linux-x86_64
+          path: |
+            yanxu-efn-linux-x86_64.tar.gz
+            dist/言序.efn
+            dist/libyanxu.so
+            dist/README.md
+
+      - name: Publish release assets
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: yanxu-efn-linux-x86_64.tar.gz

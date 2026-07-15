@@ -1,0 +1,6 @@
+*.o
+*.efn
+dist/
+target/
+yanxu/
+*.tar.gz
