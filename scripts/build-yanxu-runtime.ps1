@@ -2,6 +2,7 @@ param(
     [string]$YanxuRepo = "https://github.com/YanXuLang/yanxu.git",
     [string]$Ref = "",
     [string]$OutDir = ".\yanxu-runtime",
+    [string]$Target = "i686-pc-windows-msvc",
     [switch]$KeepSource
 )
 
@@ -29,11 +30,12 @@ try {
     }
 
     Push-Location $sourceDir
-    cargo build --release
+    rustup target add $Target
+    cargo build --release --target $Target
     Pop-Location
 
     New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
-    Copy-Item (Join-Path $sourceDir "target\release\yanxu.dll") (Join-Path $OutDir "yanxu.dll") -Force
+    Copy-Item (Join-Path $sourceDir "target\$Target\release\yanxu.dll") (Join-Path $OutDir "yanxu.dll") -Force
     Write-Host "已生成 yanxu.dll: $((Resolve-Path (Join-Path $OutDir 'yanxu.dll')).Path)"
 }
 finally {

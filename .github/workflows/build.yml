@@ -50,10 +50,10 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++-mingw-w64-x86-64 make zip
+          sudo apt-get install -y g++-mingw-w64-i686 make zip
 
       - name: Build EF native library
-        run: make TARGET=windows CXX=x86_64-w64-mingw32-g++ OUTPUT_FILE=言序.efn
+        run: make TARGET=windows CXX=i686-w64-mingw32-g++ OUTPUT_FILE=言序.efn
 
       - name: Package artifact
         run: |
@@ -61,14 +61,14 @@ jobs:
           cp "言序.efn" dist/
           cp README.md dist/
           cp scripts/build-yanxu-runtime.ps1 dist/
-          (cd dist && zip -9 -r ../yanxu-efn-windows-x86_64-bridge-only.zip .)
+          (cd dist && zip -9 -r ../yanxu-efn-windows-x86-bridge-only.zip .)
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: yanxu-efn-windows-x86_64-bridge-only
+          name: yanxu-efn-windows-x86-bridge-only
           path: |
-            yanxu-efn-windows-x86_64-bridge-only.zip
+            yanxu-efn-windows-x86-bridge-only.zip
             dist/言序.efn
             dist/README.md
             dist/build-yanxu-runtime.ps1
@@ -90,4 +90,4 @@ jobs:
         with:
           files: |
             release-assets/yanxu-efn-linux-x86_64-bridge-only/yanxu-efn-linux-x86_64-bridge-only.tar.gz
-            release-assets/yanxu-efn-windows-x86_64-bridge-only/yanxu-efn-windows-x86_64-bridge-only.zip
+            release-assets/yanxu-efn-windows-x86-bridge-only/yanxu-efn-windows-x86-bridge-only.zip
