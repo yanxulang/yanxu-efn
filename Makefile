@@ -1,12 +1,20 @@
 EFNDK ?= third_party/efndk_cpp
 OUTPUT_FILE ?= 言序.efn
 CXX ?= g++
+TARGET ?= linux
 
-CXXFLAGS ?= -s -O2 -w -fpermissive -fPIC -c -D_LINUX -DNDEBUG -D_UNICODE -DUNICODE
+BASE_CXXFLAGS ?= -s -O2 -w -fpermissive -c -DNDEBUG -D_UNICODE -DUNICODE
+ifeq ($(TARGET),windows)
+	CXXFLAGS ?= $(BASE_CXXFLAGS)
+	LDFLAGS ?= -s -O2 -shared
+	LDLIBS ?=
+else
+	CXXFLAGS ?= $(BASE_CXXFLAGS) -fPIC -D_LINUX
+	LDFLAGS ?= -s -O2 -shared
+	LDLIBS ?= -ldl
+endif
 EF_CXXFLAGS ?= $(CXXFLAGS)
-LDFLAGS ?= -s -O2 -shared
 INCLUDES = -I. -I$(EFNDK)/include
-LDLIBS = -ldl
 
 EF_SOURCES = \
 	$(EFNDK)/source/ptrlist.cpp \
