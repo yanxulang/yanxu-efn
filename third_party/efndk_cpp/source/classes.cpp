@@ -904,7 +904,8 @@ void EF_CString::FormatV (EFChar* szFormat, va_list argList)
     MCHECK_STR_POINTER (szFormat)
 
     EF_MiniMem memTemp;
-	va_list argListSave = argList;
+	va_list argListSave;
+	va_copy(argListSave, argList);
 
 	// 获取最多可能需要分配的内存尺寸
 	int nMaxLen = 0;
